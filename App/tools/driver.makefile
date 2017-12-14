@@ -65,12 +65,20 @@ MAKEHOME:=$(dir $(lastword ${MAKEFILE_LIST}))
 USERMAKEFILE:=$(lastword $(filter-out $(lastword ${MAKEFILE_LIST}), ${MAKEFILE_LIST}))
 
 
+##---## In E3, We only use ONE EPICS_BASE in order to COMPILE A MODULE
+##---## 
+##---## In E3,  EPICS_LOCATION is the EPICS BASE  /testing/epics/base-3.15.5 
+EPICS_LOCATION =
+##---## In E3, we extract BASE_VERSION from EPICS_LOCATION
+E3_EPICS_VERSION_TEMP:=$(notdir $(EPICS_LOCATION))
+E3_EPICS_VERSION:=$(E3_EPICS_VERSION_TEMP:base-%=%)
+BUILD_EPICS_VERSIONS = $(E3_EPICS_VERSION)
+##---## 
 
-DEFAULT_EPICS_VERSIONS =
 BUILDCLASSES = 
 EPICS_MODULES = 
-EPICS_LOCATION = 
-MODULE_LOCATION = ${EPICS_MODULES}/$(or ${PRJ},$(error PRJ not defined))/$(or ${LIBVERSION},$(error LIBVERSION not defined))
+
+MODULE_LOCATION =${EPICS_MODULES}/$(or ${PRJ},$(error PRJ not defined))/$(or ${LIBVERSION},$(error LIBVERSION not defined))
 
 
 DOCUEXT = txt html htm doc pdf ps tex dvi gif jpg png
@@ -124,18 +132,24 @@ ifndef EPICSVERSION
 ## RUN 1
 # In source directory
 
+##---## In E3, we don't need to check which EPICS BASE
+
 # Find out which EPICS versions to build.
-INSTALLED_EPICS_VERSIONS := $(patsubst ${EPICS_LOCATION}/base-%,%,$(wildcard ${EPICS_LOCATION}/base-*[0-9]))
-EPICS_VERSIONS = $(filter-out ${EXCLUDE_VERSIONS:=%},${DEFAULT_EPICS_VERSIONS})
-MISSING_EPICS_VERSIONS = $(filter-out ${BUILD_EPICS_VERSIONS},${EPICS_VERSIONS})
-BUILD_EPICS_VERSIONS = $(filter ${INSTALLED_EPICS_VERSIONS},${EPICS_VERSIONS})
+#INSTALLED_EPICS_VERSIONS := $(patsubst ${EPICS_LOCATION}/base-%,%,$(wildcard ${EPICS_LOCATION}/base-*[0-9]))
+#EPICS_VERSIONS = $(filter-out ${EXCLUDE_VERSIONS:=%},${DEFAULT_EPICS_VERSION})
+#MISSING_EPICS_VERSIONS = $(filter-out ${BUILD_EPICS_VERSIONS},${DEFAULT_EPICS_VERSION})
+#BUILD_EPICS_VERSIONS = $(filter ${INSTALLED_EPICS_VERSIONS},${DEFAULT_EPICS_VERSION})
+
+#BUILD_EPICS_VERSIONS = ${DEFAULT_EPICS_VERSION}
+
 $(foreach v,$(sort $(basename ${BUILD_EPICS_VERSIONS})),$(eval EPICS_VERSIONS_$v=$(filter $v.%,${BUILD_EPICS_VERSIONS})))
 
-# Check only version of files needed to build the module. But which are they?
-VERSIONCHECKFILES = $(filter-out /% -none-, $(wildcard *makefile* *Makefile* *.db *.template *.subs *.dbd *.cmd) ${SOURCES} ${DBDS} ${TEMPLATES} ${SCRIPTS} $(foreach v,3.13 3.14 3.15, ${SOURCES_$v} ${DBDS_$v}))
-VERSIONCHECKCMD = ${MAKEHOME}/getVersion.tcl ${VERSIONDEBUGFLAG} ${VERSIONCHECKFILES}
-LIBVERSION = $(or $(filter-out test,$(shell ${VERSIONCHECKCMD} 2>/dev/null)),${USER},test)
-VERSIONDEBUGFLAG = $(if ${VERSIONDEBUG}, -d)
+
+# # Che# ck only version of files needed to build the module. But which are they?
+# VERSIONCHECKFILES = $(filter-out /% -none-, $(wildcard *makefile* *Makefile* *.db *.template *.subs *.dbd *.cmd) ${SOURCES} ${DBDS} ${TEMPLATES} ${SCRIPTS} $(foreach v,3.13 3.14 3.15, ${SOURCES_$v} ${DBDS_$v}))
+# VERSIONCHECKCMD = ${MAKEHOME}/getVersion.tcl ${VERSIONDEBUGFLAG} ${VERSIONCHECKFILES}
+# LIBVERSION = $(or $(filter-out test,$(shell ${VERSIONCHECKCMD} 2>/dev/null)),${USER},test)
+# VERSIONDEBUGFLAG = $(if ${VERSIONDEBUG}, -d)
 
 # Default module name is name of current directory.
 # But in case of "src" or "snl", use parent directory instead.
@@ -183,7 +197,7 @@ help:
 	do echo "  make $$target"; \
 	done
 	@echo "Makefile variables:(defaults) [comment]"
-	@echo "  EPICS_VERSIONS   (${DEFAULT_EPICS_VERSIONS})"
+#	@echo "  EPICS_VERSIONS   (${DEFAULT_EPICS_VERSION})"
 	@echo "  MODULE           (${PRJ}) [from current directory name]"
 	@echo "  PROJECT          [older name for MODULE]"
 	@echo "  SOURCES          (*.c *.cc *.cpp *.st *.stt *.gt)"
@@ -199,16 +213,16 @@ help:
 	@echo "  BUILDCLASSES     (vxWorks) [other choices: Linux]"
 	@echo "  <module>_VERSION () [build against specific version of other module]"
 
-# "make version" shows the module version and why it is what it is.       
-version: ${IGNOREFILES}
-	@${VERSIONCHECKCMD}
+##  "make version" shows the module version and why it is what it is.       
+# version: ${IGNOREFILES}
+# 	@${VERSIONCHECKCMD}
 
 debug::
-	@echo "INSTALLED_EPICS_VERSIONS = ${INSTALLED_EPICS_VERSIONS}"
+#	@echo "INSTALLED_EPICS_VERSIONS = ${INSTALLED_EPICS_VERSIONS}"
 	@echo "BUILD_EPICS_VERSIONS = ${BUILD_EPICS_VERSIONS}"
-	@echo "MISSING_EPICS_VERSIONS = ${MISSING_EPICS_VERSIONS}"
-	@echo "EPICS_VERSIONS_3.13 = ${EPICS_VERSIONS_3.13}"
-	@echo "EPICS_VERSIONS_3.14 = ${EPICS_VERSIONS_3.14}"
+#	@echo "MISSING_EPICS_VERSIONS = ${MISSING_EPICS_VERSIONS}"
+#	@echo "EPICS_VERSIONS_3.13 = ${EPICS_VERSIONS_3.13}"
+#	@echo "EPICS_VERSIONS_3.14 = ${EPICS_VERSIONS_3.14}"
 	@echo "EPICS_VERSIONS_3.15 = ${EPICS_VERSIONS_3.15}"
 	@echo "BUILDCLASSES = ${BUILDCLASSES}"
 	@echo "LIBVERSION = ${LIBVERSION}"
@@ -222,6 +236,9 @@ MAKEVERSION = ${MAKE} -f ${USERMAKEFILE} LIBVERSION=${LIBVERSION}
 build install debug:: ${IGNOREFILES}
 	for VERSION in ${BUILD_EPICS_VERSIONS}; do ${MAKEVERSION} EPICSVERSION=$$VERSION $@; done
 
+#build: ${IGNOREFILES}
+#	${MAKE} -f ${USERMAKEFILE} LIBVERSION=${LIBVERSION} EPICSVERSION=$$DEFAULT_EPICS_VERSION
+#	 ${MAKEVERSION} EPICSVERSION=$${BUILD_EPICS_VERSIONS}
 # Handle cases where user requests a group of EPICS versions:
 # make <action>.3.13 or make <action>.3.14 instead of make <action> or
 # make 3.13 or make 3.14 instead of make.
@@ -277,7 +294,8 @@ else # EPICSVERSION
 # EPICSVERSION defined 
 # Second or third run (see T_A branch below)
 
-EPICS_BASE=${EPICS_LOCATION}/base-${EPICSVERSION}
+EPICS_BASE=${EPICS_LOCATION}
+#/base-${EPICSVERSION}
 
 ifneq ($(filter 3.13.%,$(EPICSVERSION)),)
 
@@ -402,7 +420,7 @@ SRCS_vxWorks += ${SOURCES_vxWorks_${EPICS_BASETYPE}}
 export SRCS_vxWorks
 
 install build debug:: $(MAKE_FIRST)
-	@echo "MAKING EPICS VERSION R${EPICSVERSION}"
+	@echo "MAKING EPICS VERSION ${EPICSVERSION}"
 
 uninstall::
 	$(RMDIR) ${INSTALL_REV}
