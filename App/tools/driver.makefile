@@ -72,6 +72,10 @@ EPICS_LOCATION =
 ##---## In E3, we extract BASE_VERSION from EPICS_LOCATION
 E3_EPICS_VERSION_TEMP:=$(notdir $(EPICS_LOCATION))
 E3_EPICS_VERSION:=$(E3_EPICS_VERSION_TEMP:base-%=%)
+E3_SITEMODS_PATH =
+E3_SITEAPPS_PATH =
+E3_SITELIBS_PATH =
+E3_SEQUENCER_NAME =
 BUILD_EPICS_VERSIONS = $(E3_EPICS_VERSION)
 ##---## 
 
@@ -733,7 +737,13 @@ DBDFILES += $(patsubst %.gt,%.dbd,$(notdir $(filter %.gt,${SRCS})))
 #DBDFILES += $(if $(shell cat ${SUBFUNCFILE}),${SUBFUNCFILE})
 
 # snc location in 3.14: From latest version of module seq or fall back to globally installed snc.
-SNC=$(lastword $(dir ${EPICS_BASE})seq/bin/$(EPICS_HOST_ARCH)/snc $(shell ls -dv ${EPICS_MODULES}/seq/$(or $(seq_VERSION),+([0-9]).+([0-9]).+([0-9]))/bin/${EPICS_HOST_ARCH}/snc 2>/dev/null))
+#SNC=$(lastword $(dir ${EPICS_BASE})seq/bin/$(EPICS_HOST_ARCH)/snc $(shell ls -dv ${EPICS_MODULES}/seq/$(or $(seq_VERSION),+([0-9]).+([0-9]).+([0-9]))/bin/${EPICS_HOST_ARCH}/snc 2>/dev/null))
+# E3 has all alias for all sequencer version in $(E3_SITELIBS_PATH), so we are using that variable as driver.Makefile inputs.
+# The -v option is the natural sorf of (version) numbers within text. So, From lastest version of module sequencer, we will use, in the same way the original one.
+# But we remove the global snc path.
+# Tuesday, January 30 14:02:58 CET 2018, jhlee
+#
+SNC=$(lastword $(shell ls -dv $(E3_SITELIBS_PATH)/$(E3_SEQUENCER_NAME)_$(or $(seq_VERSION),+([0-9]).+([0-9]).+([0-9]))_bin/${EPICS_HOST_ARCH}/snc 2>/dev/null))
 
 endif # 3.14
 
@@ -1049,3 +1059,12 @@ $(BUILDRULE)
 endif # In O.* directory
 endif # T_A defined
 endif # EPICSVERSION defined
+
+
+
+
+##
+## Tuesday, January 30 14:03:35 CET 2018 :  Default snc path (SNC) was changed in order to use E3_SITELIBS_PATH,
+##                                          at the same time, we also add E3_SITEMODS_PATH, E3_SITEAPPS_PATH also.
+##                                          They should be configured in E3/CONFIG_EXPORT and E3/CONFIG_E3_MAKEFILE.
+##                                          We also introduce E3_SEQUENCER_NAME also. 
