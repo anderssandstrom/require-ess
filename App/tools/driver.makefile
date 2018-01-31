@@ -924,28 +924,32 @@ SNCFLAGS += -r
 # Tuesday, November 28 15:59:37 CET 2017, Jeong Han Lee
 
 %$(OBJ) %_snl.dbd: %.st
-	@echo "Preprocessing $(<F)"
+	@echo ">> SNC building process .... "
+	@echo ">> Preprocessing $(<F)"
 	$(RM) $(*F).i
 	$(CPP) ${CPPSNCFLAGS1} $< > $(*F).i
-	@echo "Converting $(*F).i to $(*F).c"
+	@echo ">> Converting $(*F).i to $(*F).c"
 	$(RM) $@
+	@echo ">> SNC is defined as $(SNC)"
 	$(SNC) $(TARGET_SNCFLAGS) $(SNCFLAGS) $(*F).i -o $(*F).c.tmp
 	@mv $(*F).c.tmp $(*F).c
-	@echo "Compiling $(*F).c"
+	@echo ">> Compiling $(*F).c"
 	$(RM) $@
 	$(COMPILE.c) -c ${SNC_CFLAGS} $(*F).c 
-	@echo "Building $(*F)_snl.dbd"
+	@echo ">> Building $(*F)_snl.dbd"
 	awk -F [\(\)]  '/epicsExportRegistrar/ { print "registrar (" $$2 ")"}' $(*F).c > $(*F)_snl.dbd
 
 %$(OBJ) %_snl.dbd: %.stt
-	@echo "Preprocessing $(<F)"
+	@echo ">> SNC building process .... "
+	@echo ">> Preprocessing $(<F)"
 	$(RM) $(*F).i
 	$(CPP) ${CPPSNCFLAGS1} $< > $(*F).i
-	@echo "Converting $(*F).i to $(*F).c"
+	@echo ">> Converting $(*F).i to $(*F).c"
 	$(RM) $@
+	@echo ">> SNC is defined as $(SNC)"
 	$(SNC) $(TARGET_SNCFLAGS) $(SNCFLAGS) $(*F).i -o $(*F).c.tmp
 	@mv $(*F).c.tmp $(*F).c
-	@echo "Compiling $(*F).c"
+	@echo ">> Compiling $(*F).c"
 	$(RM) $@
 	$(COMPILE.c) -c ${SNC_CFLAGS} $(*F).c
 	@echo "Building $(*F)_snl.dbd"
@@ -1064,7 +1068,8 @@ endif # EPICSVERSION defined
 
 
 ##
-## Tuesday, January 30 14:03:35 CET 2018 :  Default snc path (SNC) was changed in order to use E3_SITELIBS_PATH,
+## Tuesday, January 30 14:03:35 CET 2018  : Default snc path (SNC) was changed in order to use E3_SITELIBS_PATH,
 ##                                          at the same time, we also add E3_SITEMODS_PATH, E3_SITEAPPS_PATH also.
 ##                                          They should be configured in E3/CONFIG_EXPORT and E3/CONFIG_E3_MAKEFILE.
 ##                                          We also introduce E3_SEQUENCER_NAME also. 
+## Wednesday, January 31 15:18:33 CET 2018: Add Debug messages in SNC  
