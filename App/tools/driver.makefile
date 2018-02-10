@@ -743,7 +743,21 @@ DBDFILES += $(patsubst %.gt,%.dbd,$(notdir $(filter %.gt,${SRCS})))
 # But we remove the global snc path.
 # Tuesday, January 30 14:02:58 CET 2018, jhlee
 #
-SNC=$(lastword $(shell ls -dv $(E3_SITELIBS_PATH)/$(E3_SEQUENCER_NAME)_$(or $(seq_VERSION),+([0-9]).+([0-9]).+([0-9]))_bin/${EPICS_HOST_ARCH}/snc 2>/dev/null))
+#
+# We also introduce the way to get SEQUENCER_VERSION, if is not, the default *.*.* version sequencers, and select the lastword.
+# Saturday, February 10 22:42:21 CET 2018, jhlee
+
+
+ifndef E3_SEQUENCER_VERSION
+	SNC_VERSION=*.*.*
+else
+	SNC_VERSION=$(E3_SEQUENCER_VERSION)
+endif
+
+SNCALL=$(shell ls  -dv $(E3_SITELIBS_PATH)/$(E3_SEQUENCER_NAME)_$(SNC_VERSION)_bin/$(EPICS_HOST_ARCH) 2> /dev/null)
+SNC=$(lastword $(SNCALL))/snc
+
+
 
 endif # 3.14
 
@@ -923,8 +937,14 @@ SNCFLAGS += -r
 # 
 # Tuesday, November 28 15:59:37 CET 2017, Jeong Han Lee
 
+
 %$(OBJ) %_snl.dbd: %.st
+	@echo ""
 	@echo ">> SNC building process .... "
+	@echo ">> SNC                  : $(SNC)"
+	@echo ">> SNC_VERSION          : $(SNC_VERSION)"
+	@echo ">> E3_SEQUENCER_NAME    : $(E3_SEQUENCER_NAME)"
+	@echo ">> E3_SEQUENCER_VERSION : $(E3_SEQUENCER_VERSION)"
 	@echo ">> Preprocessing $(<F)"
 	$(RM) $(*F).i
 	$(CPP) ${CPPSNCFLAGS1} $< > $(*F).i
@@ -940,7 +960,12 @@ SNCFLAGS += -r
 	awk -F [\(\)]  '/epicsExportRegistrar/ { print "registrar (" $$2 ")"}' $(*F).c > $(*F)_snl.dbd
 
 %$(OBJ) %_snl.dbd: %.stt
+	@echo ""
 	@echo ">> SNC building process .... "
+	@echo ">> SNC                  : $(SNC)"
+	@echo ">> SNC_VERSION          : $(SNC_VERSION)"
+	@echo ">> E3_SEQUENCER_NAME    : $(E3_SEQUENCER_NAME)"
+	@echo ">> E3_SEQUENCER_VERSION : $(E3_SEQUENCER_VERSION)"
 	@echo ">> Preprocessing $(<F)"
 	$(RM) $(*F).i
 	$(CPP) ${CPPSNCFLAGS1} $< > $(*F).i
@@ -1073,3 +1098,7 @@ endif # EPICSVERSION defined
 ##                                          They should be configured in E3/CONFIG_EXPORT and E3/CONFIG_E3_MAKEFILE.
 ##                                          We also introduce E3_SEQUENCER_NAME also. 
 ## Wednesday, January 31 15:18:33 CET 2018: Add Debug messages in SNC  
+##
+## Saturday, February 10 22:42:44 CET 2018: E3_SEQUENCER_VERSION was introduced. If not set, fall back to
+##                                          *.*.* versions number, and SNC will be selected via lastword
+##                                          in the original driver.makefile way.
