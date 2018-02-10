@@ -748,15 +748,21 @@ DBDFILES += $(patsubst %.gt,%.dbd,$(notdir $(filter %.gt,${SRCS})))
 # Saturday, February 10 22:42:21 CET 2018, jhlee
 
 
+ifndef E3_SEQUENCER_NAME
+	SEQ_NAME=sequencer
+else
+	SEQ_NAME=$(E3_SEQUENCER_NAME)
+endif
+
+
 ifndef E3_SEQUENCER_VERSION
 	SNC_VERSION=*.*.*
 else
 	SNC_VERSION=$(E3_SEQUENCER_VERSION)
 endif
 
-SNCALL=$(shell ls  -dv $(E3_SITELIBS_PATH)/$(E3_SEQUENCER_NAME)_$(SNC_VERSION)_bin/$(EPICS_HOST_ARCH) 2> /dev/null)
+SNCALL=$(shell ls  -dv $(E3_SITELIBS_PATH)/$(SEQ_NAME)_$(SNC_VERSION)_bin/$(EPICS_HOST_ARCH) 2> /dev/null)
 SNC=$(lastword $(SNCALL))/snc
-
 
 
 endif # 3.14
@@ -1102,3 +1108,6 @@ endif # EPICSVERSION defined
 ## Saturday, February 10 22:42:44 CET 2018: E3_SEQUENCER_VERSION was introduced. If not set, fall back to
 ##                                          *.*.* versions number, and SNC will be selected via lastword
 ##                                          in the original driver.makefile way.
+##                                          Default E3_SEQUENCER_NAME as sequencer, if it is not defined in
+##                                          CONFIG_MODULE in each module
+##
