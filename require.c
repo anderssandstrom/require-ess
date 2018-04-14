@@ -458,7 +458,7 @@ static int getRecordHandle(const char* namepart, short type, long minsize, DBADD
     char recordname[PVNAME_STRINGSZ];
     long dummy, offset;
 
-    sprintf(recordname, "%.*s%s", (int)(PVNAME_STRINGSZ-strlen(namepart)-1), getenv("IOC"), namepart);
+    sprintf(recordname, "%.*s%s", (int)(PVNAME_STRINGSZ-strlen(namepart)-1), getenv("REQUIRE_IOC"), namepart);
     if (dbNameToAddr(recordname, paddr) != 0)
     {
         fprintf(stderr, "require: record %s not found\n",
@@ -627,8 +627,8 @@ void registerModule(const char* module, const char* version, const char* locatio
     mylocation = getenv("require_DIR");
     if (mylocation == NULL) return;
     if (asprintf(&abslocation, "%s" OSI_PATH_SEPARATOR "db" OSI_PATH_SEPARATOR "moduleversion.template", mylocation) < 0) return;
-    if (asprintf(&argstring, "IOC=%.30s, MODULE=%.24s, VERSION=%.39s, MODULE_COUNT=%lu, BUFFER_SIZE=%lu",
-        getenv("IOC"), module, version, moduleCount,
+    if (asprintf(&argstring, "REQUIRE_IOC=%.30s, MODULE=%.24s, VERSION=%.39s, MODULE_COUNT=%lu, BUFFER_SIZE=%lu",
+        getenv("REQUIRE_IOC"), module, version, moduleCount,
         moduleListBufferSize+maxModuleNameLength*moduleCount) < 0) return;
     printf("Loading module info records for %s\n", module);
     dbLoadRecords(abslocation, argstring);
