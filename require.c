@@ -30,6 +30,7 @@
 #include <epicsVersion.h>
 
 
+
 #ifdef BASE_VERSION
 #define EPICS_3_13
 
@@ -56,7 +57,6 @@ epicsShareFunc int epicsShareAPI iocshCmd(const char *cmd);
 #endif
 
 #include "require.h"
-
 
 int requireDebug;
 
@@ -455,36 +455,51 @@ static int setupDbPath(const char* module, const char* dbdir)
 
 static int getRecordHandle(const char* namepart, short type, long minsize, DBADDR* paddr)
 {
-    char recordname[PVNAME_STRINGSZ];
-    long dummy, offset;
+  /*
+    #define PVNAME_STRINGSZ 61
+    defined in EPICS_BASE/include/dbDefs.h
+   */
+    char recordname[PVNAME_STRINGSZ] = "";
+    long dummy = 0L;
+    long offset = 0L;
 
     sprintf(recordname, "%.*s%s", (int)(PVNAME_STRINGSZ-strlen(namepart)-1), getenv("REQUIRE_IOC"), namepart);
+    
     if (dbNameToAddr(recordname, paddr) != 0)
-    {
-        fprintf(stderr, "require: record %s not found\n",
-            recordname);
+      {
+        fprintf(stderr,
+		"require:getRecordHandle : record %s not found\n",
+		recordname);
         return -1;
-    }
+      }
     if (paddr->field_type != type)
-    {
-        fprintf(stderr, "require: record %s has wrong type %s instead of %s\n",
-            recordname, pamapdbfType[paddr->field_type].strvalue, pamapdbfType[type].strvalue);
+      {
+        fprintf(stderr,
+		"require:getRecordHandle : record %s has wrong type %s instead of %s\n",
+		recordname,
+		pamapdbfType[paddr->field_type].strvalue,
+		pamapdbfType[type].strvalue);
         return -1;
-    }
+      }
     if (paddr->no_elements < minsize)
-    {
-        fprintf(stderr, "require: record %s has not enough elements: %lu instead of %lu\n",
-            recordname, paddr->no_elements, minsize);
+      {
+        fprintf(stderr,
+		"require:getRecordHandle : record %s has not enough elements: %lu instead of %lu\n",
+		recordname,
+		paddr->no_elements,
+		minsize);
         return -1;
-    }
+      }
     if (paddr->pfield == NULL)
-    {
-        fprintf(stderr, "require: record %s has not yet allocated memory\n",
-            recordname);
+      {
+        fprintf(stderr, "require:getRecordHandle : record %s has not yet allocated memory\n",
+		recordname);
         return -1;
-    }
+      }
+
     /* update array information */
     dbGetRset(paddr)->get_array_info(paddr, &dummy, &offset);
+    
     return 0;
 }
 
